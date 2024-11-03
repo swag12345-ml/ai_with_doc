@@ -2,6 +2,8 @@ import os
 import json
 from PIL import Image
 import google.generativeai as genai
+import base64
+from io import BytesIO
 
 # Working directory path
 working_dir = os.path.dirname(os.path.abspath(__file__))
@@ -24,7 +26,14 @@ def load_swag_ai_model():
 # Get response from Swag AI Vision model - image/text to text
 def swag_ai_vision_response(prompt, image):
     swag_ai_vision_model = genai.GenerativeModel("gemini-1.5-flash")
-    response = swag_ai_vision_model.generate_content([prompt, image])
+    
+    # Convert image to base64 string
+    buffered = BytesIO()
+    image.save(buffered, format="JPEG")  # or "PNG"
+    img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+
+    # Assuming the API can accept base64-encoded images
+    response = swag_ai_vision_model.generate_content([prompt, img_str])
     result = response.text
     return result
 
