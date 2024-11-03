@@ -3,7 +3,7 @@ from PIL import Image
 import streamlit as st
 from streamlit_option_menu import option_menu
 from gemini_utility import (load_swag_ai_model,
-                             swag_ai_response,  # function for Swag AI chatbot response
+                             swag_ai_response,
                              swag_ai_vision_response,
                              swag_ai_embeddings_response)
 import pdfplumber  # Import pdfplumber for PDF processing
@@ -25,10 +25,6 @@ with st.sidebar:
                            menu_icon='robot', icons=['chat-dots-fill', 'image-fill', 'textarea-t', 'patch-question-fill'],
                            default_index=0
                            )
-
-# Define a function to map roles for Streamlit display
-def translate_role_for_streamlit(role):
-    return "assistant" if role == "assistant" else "user"
 
 # Chatbot page
 if selected == 'ChatBot':
@@ -53,11 +49,11 @@ if selected == 'ChatBot':
         st.chat_message("user").markdown(user_prompt)
 
         # Send user's message to Swag AI and get the response
-        chat_response = st.session_state.chat_session.send_message(user_prompt)
+        swag_ai_response = st.session_state.chat_session.send_message(user_prompt)
 
         # Display Swag AI's response
         with st.chat_message("assistant"):
-            st.markdown(chat_response.text)
+            st.markdown(swag_ai_response.text)
 
 # Image captioning page
 if selected == "Image Captioning":
@@ -95,12 +91,31 @@ if selected == "Embed Text":
 
     if uploaded_pdf is not None:
         with pdfplumber.open(uploaded_pdf) as pdf:
-            # Extract text from each page
             full_text = ""
-            for page in pdf.pages:
-                full_text += page.extract_text() + "\n"
+            images = []
 
+            for page in pdf.pages:
+                # Extract text from the page
+                page_text = page.extract_text()
+                if page_text:
+                    full_text += page_text + "\n"
+
+                # Extract images from the page
+                page_images = page.images
+                for img in page_images:
+                    # Extract image and convert to PIL format
+                    image = page.to_image()
+                    pil_image = image.original
+                    images.append(pil_image)
+
+        # Display extracted text
         st.text_area("Extracted Text", full_text, height=300)
+
+        # Display images
+        if images:
+            st.subheader("Images Extracted from PDF:")
+            for idx, img in enumerate(images):
+                st.image(img, caption=f"Image {idx + 1}", use_column_width=True)
 
         # Input for user questions
         user_question = st.text_area("Ask a question about the PDF...")
