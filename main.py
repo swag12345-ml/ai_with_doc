@@ -3,7 +3,7 @@ from PIL import Image
 import streamlit as st
 from streamlit_option_menu import option_menu
 from gemini_utility import (load_swag_ai_model,
-                             swag_ai_response,
+                             swag_ai_response,  # function for Swag AI chatbot response
                              swag_ai_vision_response,
                              swag_ai_embeddings_response)
 import pdfplumber  # Import pdfplumber for PDF processing
@@ -25,6 +25,10 @@ with st.sidebar:
                            menu_icon='robot', icons=['chat-dots-fill', 'image-fill', 'textarea-t', 'patch-question-fill'],
                            default_index=0
                            )
+
+# Define a function to map roles for Streamlit display
+def translate_role_for_streamlit(role):
+    return "assistant" if role == "assistant" else "user"
 
 # Chatbot page
 if selected == 'ChatBot':
@@ -49,11 +53,11 @@ if selected == 'ChatBot':
         st.chat_message("user").markdown(user_prompt)
 
         # Send user's message to Swag AI and get the response
-        swag_ai_response = st.session_state.chat_session.send_message(user_prompt)
+        chat_response = st.session_state.chat_session.send_message(user_prompt)
 
         # Display Swag AI's response
         with st.chat_message("assistant"):
-            st.markdown(swag_ai_response.text)
+            st.markdown(chat_response.text)
 
 # Image captioning page
 if selected == "Image Captioning":
@@ -104,7 +108,7 @@ if selected == "Embed Text":
         if st.button("Get Response"):
             if user_question:
                 # Call your AI model with the question and the extracted text
-                response = swag_ai_response(f"{full_text}\n\nQuestion: {user_question}")
+                response = swag_ai_embeddings_response(f"{full_text}\n\nQuestion: {user_question}")
                 st.markdown(response)
 
 # Ask me anything model
